@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+    <head>
+        <title>Reusable Form Demo</title>
+
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/js/bootstrap.min.js" integrity="sha384-ChfqqxuZUCnJSK3+MXmPNIyE6ZbWh2IMqE241rYiqJxyMiZ6OW/JmZQ5stwEULTy" crossorigin="anonymous"></script>
+
+        <script>
+        $(function(){
+          $('button#auto').click(function () {
+            $('#max_evals').val(200);
+            $('#num_epochs').val(2000);
+            $('#patience').val(15);
+            });
+
+          $('button#quick').click(function () {
+            $('#max_evals').val(50);
+            $('#num_epochs').val(500);
+            $('#patience').val(5);
+            });
+          });
+        </script>
+    </head>
+<body>
+
+
+<div class="container">
+
+  <h3>AutoML for NIALM - Settings</h3>
+  <hr>
+  <form action="{{ url_for('handle_data') }}" method="post">
+    <div class="form-group">
+      <label>File path:</label>
+      <input type="text" class="form-control" placeholder="" name="hd5_filepath" value="../data/REDD/redd.h5">
+    </div>
+
+    <div class="form-row">
+      <div class="col">
+        <label>Train building:</label>
+        <input type="number" class="form-control" placeholder="" name="train_building" value="1">
+      </div>
+      <div class="col">
+        <label>Train start date:</label>
+        <input type="text" class="form-control" placeholder="None" name="train_start">
+      </div>
+      <div class="col">
+        <label>Train end date:</label>
+        <input type="text" class="form-control" placeholder="" name="train_end" value="2011-05-14">
+      </div>
+    </div>
+
+    <br>
+    <div class="form-row">
+      <div class="col">
+        <label>Test building:</label>
+        <input type="number" class="form-control" placeholder="" name="test_building" value="1">
+      </div>
+      <div class="col">
+        <label>Test start date:</label>
+        <input type="text" class="form-control" placeholder="" name="test_start" value="2011-05-14">
+      </div>
+      <div class="col">
+        <label>Test end date:</label>
+        <input type="text" class="form-control" placeholder="None" name="test_end" >
+      </div>
+    </div>
+
+    <br>
+    <div class="form-group">
+      <label>Appliance:</label>
+      <input type="text" class="form-control" placeholder="" name="appliance" value="fridge">
+    </div>
+    <div class="form-group">
+      <label>Downsampling rate:</label>
+      <input type="number" class="form-control" placeholder="" name="downsampling_period" value="120">
+    </div>
+
+    <div class="form-group">
+      <label>Metrics to optimize:</label>
+      <select class="form-control" name="metrics_to_optimize">
+        <option value="mean_absolute_error">Mean Absolute Error</option>
+        <option value="accuracy_score">Accuracy (Classification)</option>
+        <option value="f1_score">F1 Score</option>
+        <option value="precision_score">Precision</option>
+        <option value="recall_score">Recall</option>
+        <option value="mean_squared_error">Mean Squared Error</option>
+        <option value="nad">Normalized Absolute Distance</option>
+        <option value="disaggregation_accuracy">Disaggregation Accuracy</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label>AutoML Mode:</label> <br>
+      <div class="btn-group" role="group" aria-label="Basic example">
+        <button id="auto" type="button" class="btn btn-secondary">Auto</button>
+        <button id="quick" type="button" class="btn btn-secondary">Quick</button>
+        <button id="manual" type="button" class="btn btn-secondary">Manual</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <div class="col">
+        <label>Max evals:</label>
+        <input type="number" class="form-control" id="max_evals" placeholder="" name="max_evals" value="2">
+      </div>
+      <div class="col">
+        <label>Max number of epochs:</label>
+        <input type="number" class="form-control" id="num_epochs" placeholder="" name="num_epochs" value="1">
+      </div>
+      <div class="col">
+        <label>Patience rate:</label>
+        <input type="number" class="form-control" id="patience" placeholder="" name="patience" value="0">
+      </div>
+    </div>
+
+    <br>
+    <div class="form-group">
+      <button type="submit" class="btn btn-primary btn-block">Start</button>
+    </div>
+  </form>
+
+</div>
+
+</body>
+</html>
