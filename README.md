@@ -9,13 +9,19 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 
 See `requirements.txt` for the required Python packages.
+
 Make sure have the HDF5 data of the REDD or UK-DALE dataset into a data directory. For example, `data/REDD/redd.h5` or `data/UKDALE/ukdale.h5`.
 
 
-## Running the server
+## Starting the flask server
+```
+# make the script executable
+chmod +x flask_run.sh
 
+# run the script to start flask server
+./flask_run.sh
 
-
+```
 
 ## License
 
