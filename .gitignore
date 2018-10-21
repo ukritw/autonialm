@@ -108,6 +108,6 @@ data/
 
 disag-out.h5
 
-bayesian_optimization/results/
+# bayesian_optimization/results/
 
 .DS_Store
