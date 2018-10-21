@@ -24,7 +24,9 @@ chmod +x flask_run.sh
 
 ## Run AutoNIALM via command line
 You also can run the code through the command line interface without having to start the Flask server. 
-You must specify the following arguements:
+
+
+**You must specify the following arguments:**
 ```
       --datapath                Data file path
       --train_building          Train building
