@@ -332,6 +332,16 @@ def main():
     # global metrics_to_optimize
     # metrics_to_optimize = "mean_absolute_error"
 
+    # Warn user if train/test overlap
+    # Same building and datetime overlaps
+    if (train_building == test_building):
+        # The case where testing data starts before training data and overlaps
+        if (train_start != None) and (test_end != None) and (test_end < train_start):
+            print("WARNING: Test data overlaps with training data!!!")
+        # The case where testing data starts after training data and overlaps
+        elif (test_start < train_end):
+            print("WARNING: Test data overlaps with training data!!!")
+
     # Search space
     space = hp.choice('algorithm', [
         {

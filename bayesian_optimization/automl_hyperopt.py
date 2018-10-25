@@ -306,6 +306,17 @@ def main(args_hd5_filepath ,args_train_building, args_train_start, args_train_en
     max_evals = args_max_evals
     metrics_to_optimize = args_metrics_to_optimize
 
+    # Warn user if train/test overlap
+    # Same building and datetime overlaps
+    if (train_building == test_building):
+        # The case where testing data starts before training data and overlaps
+        if (train_start != None) and (test_end != None) and (test_end < train_start):
+            print("WARNING: Test data overlaps with training data!!!")
+        # The case where testing data starts after training data and overlaps
+        elif (test_start < train_end):
+            print("WARNING: Test data overlaps with training data!!!")
+
+
     # Search space
     space = hp.choice('algorithm', [
         {
