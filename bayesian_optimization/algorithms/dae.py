@@ -16,7 +16,7 @@ sys.path.append(os.path.abspath('../bayesian_optimization/'))
 from utils import metrics
 
 
-def dae(dataset_path, train_building, train_start, train_end, test_building, test_start, test_end, meter_key, sample_period, num_epochs, patience, sequence_length, optimizer, learning_rate, loss):
+def dae(dataset_path, train_building, train_start, train_end, test_building, test_start, test_end, val_building, val_start, val_end, meter_key, sample_period, num_epochs, patience, sequence_length, optimizer, learning_rate, loss):
 
     # Start tracking time
     start = time.time()
@@ -26,6 +26,8 @@ def dae(dataset_path, train_building, train_start, train_end, test_building, tes
     dataset_path = dataset_path
     train = DataSet(dataset_path)
     train.set_window(start=train_start, end=train_end)
+    val = DataSet(dataset_path)
+    val.set_window(start=val_start, end=val_end)
     test = DataSet(dataset_path)
     test.set_window(start=test_start, end=test_end)
     train_building = train_building
@@ -36,11 +38,13 @@ def dae(dataset_path, train_building, train_start, train_end, test_building, tes
 
 
     train_elec = train.buildings[train_building].elec
+    val_elec = val.buildings[val_building].elec
     test_elec = test.buildings[test_building].elec
 
     train_meter = train_elec.submeters()[meter_key]
     try:
         train_mains = train_elec.mains().all_meters()[0]
+        val_mains = val_elec.mains().all_meters()[0]
         test_mains = test_elec.mains().all_meters()[0]
     except AttributeError:
         train_mains = train_elec.mains()
@@ -59,17 +63,40 @@ def dae(dataset_path, train_building, train_start, train_end, test_building, tes
 
 
     # print("========== DISAGGREGATE ============")
-    disag_filename = 'disag-out.h5'
-    output = HDFDataStore(disag_filename, 'w')
+    # Validation
+    val_disag_filename = 'disag-out-val.h5'
+    output = HDFDataStore(val_disag_filename, 'w')
+    dae.disaggregate(val_mains, output, train_meter, sample_period=sample_period)
+    output.close()
+    # Test
+    test_disag_filename = 'disag-out-test.h5'
+    output = HDFDataStore(test_disag_filename, 'w')
     dae.disaggregate(test_mains, output, train_meter, sample_period=sample_period)
     output.close()
 
     # print("========== RESULTS ============")
-    result = DataSet(disag_filename)
+        # Validation
+    result_val = DataSet(val_disag_filename)
+    res_elec_val = result_val.buildings[val_building].elec
+    rpaf_val = metrics.recall_precision_accuracy_f1(res_elec_val[meter_key], val_elec[meter_key])
+
+    val_metrics_results_dict = {
+        'recall_score': rpaf_val[0],
+        'precision_score': rpaf_val[1],
+        'accuracy_score': rpaf_val[2],
+        'f1_score': rpaf_val[3],
+        'mean_absolute_error': metrics.mean_absolute_error(res_elec_val[meter_key], val_elec[meter_key]),
+        'mean_squared_error': metrics.mean_square_error(res_elec_val[meter_key], val_elec[meter_key]),
+        'relative_error_in_total_energy': metrics.relative_error_total_energy(res_elec_val[meter_key], val_elec[meter_key]),
+        'nad': metrics.nad(res_elec_val[meter_key], val_elec[meter_key]),
+        'disaggregation_accuracy': metrics.disaggregation_accuracy(res_elec_val[meter_key], val_elec[meter_key])
+        }
+    # Test
+    result = DataSet(test_disag_filename)
     res_elec = result.buildings[test_building].elec
     rpaf = metrics.recall_precision_accuracy_f1(res_elec[meter_key], test_elec[meter_key])
 
-    metrics_results_dict = {
+    test_metrics_results_dict = {
         'recall_score': rpaf[0],
         'precision_score': rpaf[1],
         'accuracy_score': rpaf[2],
@@ -118,7 +145,8 @@ def dae(dataset_path, train_building, train_start, train_end, test_building, tes
     # }
 
     model_result_data = {
-        'metrics':  metrics_results_dict,
+        'val_metrics':  val_metrics_results_dict,
+        'test_metrics':  test_metrics_results_dict,
         'time_taken': format(time_taken, '.2f'),
         'epochs': num_epochs,
     }

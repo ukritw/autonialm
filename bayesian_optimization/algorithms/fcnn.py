@@ -55,7 +55,7 @@ def build_fc_model(layers, dropout_prob=0.5):
     fc_model.summary()
     return fc_model
 
-def fcnn(dataset_path, train_building, train_start, train_end, test_building, test_start, test_end, meter_key, sample_period, num_epochs,
+def fcnn(dataset_path, train_building, train_start, train_end, val_building, val_start, val_end, test_building, test_start, test_end, meter_key, sample_period, num_epochs,
                     patience,
                     num_layers,
                     optimizer,
@@ -70,9 +70,12 @@ def fcnn(dataset_path, train_building, train_start, train_end, test_building, te
     dataset_path = dataset_path
     train = DataSet(dataset_path)
     train.set_window(start=train_start, end=train_end)
+    val = DataSet(dataset_path)
+    val.set_window(start=val_start, end=val_end)
     test = DataSet(dataset_path)
     test.set_window(start=test_start, end=test_end)
     train_building = train_building
+    val_building = val_building
     test_building = test_building
     meter_key = meter_key
 
@@ -80,6 +83,7 @@ def fcnn(dataset_path, train_building, train_start, train_end, test_building, te
 
 
     train_elec = train.buildings[train_building].elec
+    val_elec = val.buildings[val_building].elec
     test_elec = test.buildings[test_building].elec
 
     try: # REDD
@@ -87,6 +91,8 @@ def fcnn(dataset_path, train_building, train_start, train_end, test_building, te
         y_train = next(train_elec[meter_key].load(sample_period=sample_period)).fillna(0)
         X_test = next(test_elec.mains().all_meters()[0].load(sample_period=sample_period)).fillna(0)
         y_test = next(test_elec[meter_key].load(sample_period=sample_period)).fillna(0)
+        X_val = next(val_elec.mains().all_meters()[0].load(sample_period=sample_period)).fillna(0)
+        y_val = next(val_elec[meter_key].load(sample_period=sample_period)).fillna(0)
 
         # Intersect between two dataframe - to make sure same trining instances in X and y
         # Train set
@@ -97,12 +103,18 @@ def fcnn(dataset_path, train_building, train_start, train_end, test_building, te
         intersect_index = pd.Index(np.sort(list(set(X_test.index).intersection(set(y_test.index)))))
         X_test = X_test.ix[intersect_index]
         y_test = y_test.ix[intersect_index]
+         # Val set
+        intersect_index = pd.Index(np.sort(list(set(X_val.index).intersection(set(y_val.index)))))
+        X_val = X_val.ix[intersect_index]
+        y_val = y_val.ix[intersect_index]
 
         # Get values from numpy array
         X_train = X_train.values
         y_train = y_train.values
         X_test = X_test.values
         y_test = y_test.values
+        X_val = X_val.values
+        y_val = y_val.values
     except AttributeError: # UKDALE
         X_train = train_elec.mains().power_series_all_data(sample_period=sample_period).fillna(0)
         y_train = next(train_elec[meter_key].power_series(sample_period=sample_period)).fillna(0)
@@ -123,7 +135,7 @@ def fcnn(dataset_path, train_building, train_start, train_end, test_building, te
         # y_train = y_train.reshape(-1, 1)
         # X_test = X_test.reshape(-1, 1)
         # y_test = y_test.reshape(-1, 1)
-        
+
         # Get values from numpy array - Avoid server error
         X_train = X_train.values.reshape(-1, 1)
         y_train = y_train.values.reshape(-1, 1)
@@ -156,13 +168,15 @@ def fcnn(dataset_path, train_building, train_start, train_end, test_building, te
 
 
     # print("========== DISAGGREGATE ============")
-    pred_fc = fc_model.predict(X_test).reshape(-1)
+    val_pred_fc = fc_model.predict(X_val).reshape(-1)
+    test_pred_fc = fc_model.predict(X_test).reshape(-1)
 
     # print("========== RESULTS ============")
     # me = Metrics(state_boundaries=[10])
     on_power_threshold = train_elec[meter_key].on_power_threshold()
     me = Metrics(state_boundaries=[on_power_threshold])
-    metrics_results_dict = Metrics.compute_metrics(me, pred_fc, y_test.flatten())
+    val_metrics_results_dict = Metrics.compute_metrics(me, val_pred_fc, y_val.flatten())
+    test_metrics_results_dict = Metrics.compute_metrics(me, test_pred_fc, y_test.flatten())
 
     # end tracking time
     end = time.time()
@@ -201,7 +215,8 @@ def fcnn(dataset_path, train_building, train_start, train_end, test_building, te
     # }
 
     model_result_data = {
-        'metrics':  metrics_results_dict,
+        'val_metrics':  val_metrics_results_dict,
+        'test_metrics':  test_metrics_results_dict,
         'time_taken': format(time_taken, '.2f'),
         'epochs': num_epochs,
     }
