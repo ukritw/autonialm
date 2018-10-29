@@ -142,9 +142,11 @@ def fhmm(dataset_path, train_building, train_start, train_end, val_building, val
 
     # Close digag_filename
     result.store.close()
+    result_val.store.close()
 
     # Close Dataset files
     train.store.close()
+    val.store.close()
     test.store.close()
 
     return model_result_data

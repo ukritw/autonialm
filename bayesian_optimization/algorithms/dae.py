@@ -75,7 +75,7 @@ def dae(dataset_path, train_building, train_start, train_end, test_building, tes
     output.close()
 
     # print("========== RESULTS ============")
-        # Validation
+    # Validation
     result_val = DataSet(val_disag_filename)
     res_elec_val = result_val.buildings[val_building].elec
     rpaf_val = metrics.recall_precision_accuracy_f1(res_elec_val[meter_key], val_elec[meter_key])
@@ -153,9 +153,11 @@ def dae(dataset_path, train_building, train_start, train_end, test_building, tes
 
     # Close digag_filename
     result.store.close()
+    result_val.store.close()
 
     # Close Dataset files
     train.store.close()
+    val.store.close()
     test.store.close()
 
     return model_result_data

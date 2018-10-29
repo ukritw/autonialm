@@ -223,6 +223,7 @@ def fcnn(dataset_path, train_building, train_start, train_end, val_building, val
 
     # Close Dataset files
     train.store.close()
+    val.store.close()
     test.store.close()
 
     return model_result_data

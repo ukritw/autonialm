@@ -71,9 +71,15 @@ count = 0
 best = 0
 
 hd5_filepath = None
+
 train_building = None
 train_start = None
 train_end = None
+
+val_building = None
+val_start = None
+val_end = None
+
 test_building = None
 test_start = None
 test_end = None
@@ -105,6 +111,7 @@ def objective(args):
                 model_result_data = decision_tree(
                     dataset_path=hd5_filepath,
                     train_building=train_building, train_start=train_start, train_end=train_end,
+                    val_building=val_building, val_start=val_start, val_end=val_end,
                     test_building=test_building, test_start=test_start, test_end=test_end,
                     meter_key=appliance,
                     sample_period=downsampling_period,
@@ -120,6 +127,7 @@ def objective(args):
                 model_result_data = random_forest(
                     dataset_path=hd5_filepath,
                     train_building=train_building, train_start=train_start, train_end=train_end,
+                    val_building=val_building, val_start=val_start, val_end=val_end,
                     test_building=test_building, test_start=test_start, test_end=test_end,
                     meter_key=appliance,
                     sample_period=downsampling_period,
@@ -131,6 +139,7 @@ def objective(args):
                 model_result_data = combinatorial_optimisation(
                             dataset_path=hd5_filepath,
                             train_building=train_building, train_start=train_start, train_end=train_end,
+                            val_building=val_building, val_start=val_start, val_end=val_end,
                             test_building=test_building, test_start=test_start, test_end=test_end,
                             meter_key=appliance,
                             sample_period=downsampling_period)
@@ -139,6 +148,7 @@ def objective(args):
                 model_result_data = fhmm(
                         dataset_path=hd5_filepath,
                         train_building=train_building, train_start=train_start, train_end=train_end,
+                        val_building=val_building, val_start=val_start, val_end=val_end,
                         test_building=test_building, test_start=test_start, test_end=test_end,
                         meter_key=appliance,
                         sample_period=downsampling_period)
@@ -154,6 +164,7 @@ def objective(args):
                 model_result_data = fcnn(
                         dataset_path=hd5_filepath,
                         train_building=train_building, train_start=train_start, train_end=train_end,
+                        val_building=val_building, val_start=val_start, val_end=val_end,
                         test_building=test_building, test_start=test_start, test_end=test_end,
                         meter_key=appliance,
                         sample_period=downsampling_period,
@@ -174,6 +185,7 @@ def objective(args):
                 model_result_data = gru(
                         dataset_path=hd5_filepath,
                         train_building=train_building, train_start=train_start, train_end=train_end,
+                        val_building=val_building, val_start=val_start, val_end=val_end,
                         test_building=test_building, test_start=test_start, test_end=test_end,
                         meter_key=appliance,
                         sample_period=downsampling_period,
@@ -192,6 +204,7 @@ def objective(args):
                 model_result_data = lstm(
                         dataset_path=hd5_filepath,
                         train_building=train_building, train_start=train_start, train_end=train_end,
+                        val_building=val_building, val_start=val_start, val_end=val_end,
                         test_building=test_building, test_start=test_start, test_end=test_end,
                         meter_key=appliance,
                         sample_period=downsampling_period,
@@ -210,6 +223,7 @@ def objective(args):
                 model_result_data = dae(
                         dataset_path=hd5_filepath,
                         train_building=train_building, train_start=train_start, train_end=train_end,
+                        val_building=val_building, val_start=val_start, val_end=val_end,
                         test_building=test_building, test_start=test_start, test_end=test_end,
                         meter_key=appliance,
                         sample_period=downsampling_period,
@@ -242,7 +256,8 @@ def objective(args):
         args['optimizer'] = args['optimizer'].__name__
 
     # Extract info from model_result_data
-    metrics = model_result_data['metrics']
+    metrics = model_result_data['val_metrics'] # result of validation
+    test_metrics = model_result_data['test_metrics']
     time_taken = model_result_data['time_taken']
     epochs = model_result_data['epochs']
 
@@ -262,6 +277,7 @@ def objective(args):
             'args': args,
             'loss': metrics[metrics_to_optimize], # return normall loss without need to inverse for maximizing
             'metrics': metrics,
+            'test_metrics': test_metrics,
             'time_taken': time_taken,
             'epochs': epochs,
             'status': STATUS_OK,
@@ -275,6 +291,7 @@ def objective(args):
             'args': args,
             'loss': metrics_minmax_reverse(metrics, metrics_to_optimize), # Need to inverse for maximizing for fmin()
             'metrics': metrics,
+            'test_metrics': test_metrics,
             'time_taken': time_taken,
             'epochs': epochs,
             'status': STATUS_OK,
@@ -294,6 +311,10 @@ def main():
     parser.add_argument('--train_start', type=str, default=None, help='YYYY-MM-DD')
     parser.add_argument('--train_end', type=str, required=True, help='YYYY-MM-DD')
 
+    parser.add_argument('--val_building', type=int, required=True)
+    parser.add_argument('--val_start', type=str, default=None, help='YYYY-MM-DD')
+    parser.add_argument('--val_end', type=str, required=True, help='YYYY-MM-DD')
+
     parser.add_argument('--test_building', type=int, required=True)
     parser.add_argument('--test_start', type=str, required=True, help='YYYY-MM-DD')
     parser.add_argument('--test_end', type=str, default=None, help='YYYY-MM-DD')
@@ -309,14 +330,19 @@ def main():
 
     # TODO: Add metrics_to_optimize, Mode, ...
     args = parser.parse_args()
-
-    global hd5_filepath ,train_building, train_start, train_end, test_building , test_start ,test_end ,appliance ,downsampling_period
+    print(args)
+    global hd5_filepath , train_building, train_start, train_end, val_building, val_start, val_end, test_building, test_start ,test_end ,appliance ,downsampling_period
     global metrics_to_optimize, num_epochs, patience
 
     hd5_filepath = args.datapath
     train_building = args.train_building
     train_start = pd.Timestamp(args.train_start) if args.train_start != None else None
     train_end = pd.Timestamp(args.train_end)
+
+    val_building = args.val_building
+    val_start = pd.Timestamp(args.val_start)
+    val_end = pd.Timestamp(args.val_end)
+
     test_building = args.test_building
     test_start = pd.Timestamp(args.test_start)
     test_end = pd.Timestamp(args.test_end) if args.test_end != None else None
@@ -436,6 +462,9 @@ def main():
         'train_building': train_building,
         'train_start': str(train_start.date()) if train_start != None else None ,
         'train_end': str(train_end.date()) if train_end != None else None ,
+        'val_building': val_building,
+        'val_start': str(val_start.date()),
+        'val_end': str(val_end.date()),
         'test_building': test_building,
         'test_start': str(test_start.date()) if test_start != None else None ,
         'test_end': str(test_end.date()) if test_end != None else None ,
@@ -469,3 +498,4 @@ if __name__ == "__main__":
 
     # REDD Dataset
     # python automl_hyperopt_cli.py --datapath ../data/REDD/redd.h5 --train_building 1 --train_building 1 --train_end 2011-05-14 --test_building 1 --test_start 2011-05-14 --appliance fridge --sampling_rate 120 --epochs 1 --patience 1 --metrics_to_optimize "mean_squared_error" --max_evals 5
+    # python automl_hyperopt_cli.py --datapath ../data/REDD/redd.h5 --train_building 1 --train_start 2011-04-18 --train_end 2011-05-10 --val_building 1 --val_start 2011-05-10 --val_end 2011-05-17 --test_building 1 --test_start 2011-05-17 --test_end 2011-05-25 --appliance fridge --sampling_rate 240 --epochs 1 --patience 0 --metrics_to_optimize "mean_squared_error" --max_evals 10
