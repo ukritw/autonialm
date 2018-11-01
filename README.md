@@ -12,16 +12,6 @@ See `requirements.txt` for the required Python packages.
 
 Make sure have the HDF5 data of the [REDD](http://redd.csail.mit.edu/) or [UK-DALE](http://jack-kelly.com/data/) dataset into a data directory. For example, `data/REDD/redd.h5` or `data/UKDALE/ukdale.h5`.
 
-
-## Starting the flask server
-```
-# make the script executable
-chmod +x flask_run.sh
-
-# run the script to start flask server
-./flask_run.sh
-```
-
 ## Run AutoNIALM via command line
 You also can run the code through the command line interface without having to start the Flask server. 
 
@@ -32,6 +22,9 @@ You also can run the code through the command line interface without having to s
       --train_building          Train building
       --train_start             Train start date (Optional); Default = start datetime of dataset
       --train_end               Train end date
+      --val_building            Validation building
+      --val_start               Validation start date
+      --val_end                 Validation end date  
       --test_building           Test building
       --test_start              Test start date
       --test_end                Test end date (Optional); Default = end datetime of dataset 
@@ -49,7 +42,7 @@ You also can run the code through the command line interface without having to s
 cd bayesian_optimization
 
 # run the script with specified settings
-python automl_hyperopt_cli.py --datapath ../data/REDD/redd.h5 --train_building 1 --train_end 2011-05-14 --test_building 1 --test_start 2011-05-14 --appliance fridge --sampling_rate 120 --epochs 10 --patience 5 --metrics_to_optimize "mean_squared_error" --max_evals 10
+python automl_hyperopt_cli.py --datapath ../data/REDD/redd.h5 --train_building 1 --train_end 2011-05-09 --val_building  1 --val_start 2011-05-10 --val_end  2011-05-17 --test_building 1 --test_start 2011-05-18 --appliance fridge --sampling_rate 120 --epochs 10 --patience 5 --metrics_to_optimize "mean_squared_error" --max_evals 10
 ```
 ## Result files
 The result will be kept in `bayesian_optimization/results/`
@@ -57,6 +50,16 @@ The result will be kept in `bayesian_optimization/results/`
 For each run of the AutoNIALM, the code with output two json files: 
 - One for the metadata of the results (`trial-metadata-[APPLIANCE]-[DOWNSAMPLING RATE]-[METRIC TO OPTIMIZE].json`) 
 - Another file containing information on every trial (`trial-results-[APPLIANCE]-[DOWNSAMPLING RATE]-[METRIC TO OPTIMIZE].json`).
+
+## Starting the flask server
+Note: Currently running the GUI on flask server doesn't support using validation sets. This will be updated soon.
+```
+# make the script executable
+chmod +x flask_run.sh
+
+# run the script to start flask server
+./flask_run.sh
+```
 
 ## License
 
